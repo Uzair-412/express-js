@@ -1,19 +1,21 @@
 // Filename: SpeakerWebinars.js
 const { DataTypes } = require('sequelize');
 const db = require('../config/database');
+const Webinar = require('../models/Webinar');
+const Speaker = require('./Speaker');
 
 const SpeakerWebinars = db.define('SpeakerWebinars', {
     id: {
-        type: DataTypes.INT(10).UNSIGNED,
+        type: DataTypes.INTEGER(10).UNSIGNED,
         primaryKey: true,
         autoIncrement: true,
     },
     speaker_id: {
-        type: DataTypes.INT(10),
+        type: DataTypes.INTEGER(10),
         allowNull: true,
     },
     webinar_id: {
-        type: DataTypes.INT(10),
+        type: DataTypes.INTEGER(10),
         allowNull: true,
     },
     created_at: {
@@ -29,4 +31,9 @@ const SpeakerWebinars = db.define('SpeakerWebinars', {
     timestamps: false,
 });
 
-export default SpeakerWebinars;
+// Define associations
+SpeakerWebinars.associate = (models) => {
+    SpeakerWebinars.belongsTo(models.Webinar, { foreignKey: 'webinar_id' });
+    SpeakerWebinars.belongsTo(models.Speaker, { foreignKey: 'speaker_id' });
+};
+module.exports = SpeakerWebinars;

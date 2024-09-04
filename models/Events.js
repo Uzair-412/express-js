@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const db = require('../config/database');
 
 // Define the Event model
-const Event = db.define('Event', {
+const Events = db.define('Events', {
     id: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
@@ -106,4 +106,4 @@ const Event = db.define('Event', {
     timestamps: false
 });
 
-export default Event;
+module.exports = Events;

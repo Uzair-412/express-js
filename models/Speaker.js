@@ -1,8 +1,11 @@
 // Filename: Speakers.js
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const db = require('../config/database');
+const Webinar = require('./Webinar');
+const SpeakerWebinar = require('./SpeakerWebinars');
+const moment = require('moment-timezone'); 
 
-const Speakers = db.define('Speakers', {
+const Speaker = db.define('Speakers', {
     id: {
         type: DataTypes.INTEGER(10).UNSIGNED,
         allowNull: false,
@@ -220,4 +223,55 @@ const Speakers = db.define('Speakers', {
     timestamps: false,
 });
 
-module.exports = Speakers;
+// Define the many-to-many relationship with Webinar using the `SpeakerWebinar` intermediate table
+
+// Associations
+
+Speaker.belongsToMany(Webinar, { 
+    through: SpeakerWebinar, 
+    foreignKey: 'speaker_id', 
+    otherKey: 'webinar_id', 
+    as: 'webinar_speakers' 
+});
+
+Speaker.belongsToMany(Webinar, { 
+    through: SpeakerWebinar, 
+    foreignKey: 'speaker_id', 
+    otherKey: 'webinar_id',
+    as: 'speaker_past_webinars' 
+});
+
+// Speakers.prototype.getWebinarSpeakers = function() {
+//     const currentDate = moment().tz('UTC').toDate();  // Adjust timezone if needed
+//     console.log(currentDate);  // This should log the current date and stop execution
+//     process.exit();
+//     return this.getWebinar_speakers({
+//         where: {
+//             show_in_app: 1,
+//             webinar_type: 'website',
+//             status: 'Y',
+//             start_date: {
+//                 [Op.gte]: currentDate,
+//             },
+//         },
+//         order: [['start_date', 'ASC']],
+//     });
+// };
+
+// // Custom method to get past webinars
+// Speakers.prototype.getSpeakerPastWebinars = function() {
+//     return this.getSpeaker_past_webinars({
+//         where: {
+//             show_in_app: 1,
+//             webinar_type: 'website',
+//             status: 'Y',
+//             start_date: {
+//                 [Op.lt]: new Date()
+//             }
+//         },
+//         order: [['start_date', 'ASC']],
+//     });
+// };
+
+
+module.exports = Speaker;

@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/apiRoutes');
 const sequelize = require('./config/database');
+require('./global');
 
 const app = express();
 app.use(bodyParser.json());

@@ -1,6 +1,8 @@
 // Filename: Webinar.js
 const { DataTypes } = require('sequelize');
 const db = require('../config/database');
+const Speaker = require('./Speaker');
+const SpeakerWebinars = require('./SpeakerWebinars');
 
 const Webinar = db.define('Webinar', {
     id: {
@@ -222,4 +224,14 @@ const Webinar = db.define('Webinar', {
     timestamps: false,
 });
 
-export default Webinar;
+
+Webinar.associate = (models) => {
+    Webinar.belongsToMany(models.Speakers, { 
+        through: 'SpeakerWebinars', 
+        foreignKey: 'webinar_id', 
+        otherKey: 'speaker_id', 
+        as: 'speakers' 
+    });
+};
+  
+module.exports = Webinar;
