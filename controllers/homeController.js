@@ -2,6 +2,7 @@
 const Country = require('../models/Country');
 const States = require('../models/States');
 const BusinessType = require('../models/BusinessType');
+const Vendor = require('../models/Vendor');
 
 exports.getCountries = async (req, res) => {
     try {
@@ -31,6 +32,7 @@ exports.mainSideBar = async (req, res) => {
     try {
         const data = {};
         data['shop_by_department'] = await BusinessType.findAll({
+            attributes : { exclude: ['long_description']},
             where: {
                 status: "Y",
                 show_in_main_menu: "Y",
@@ -38,15 +40,55 @@ exports.mainSideBar = async (req, res) => {
             order: [['display_position', 'ASC']],
         });
 
-        // Call BusinessType.getSubCategories as it's static
-        await Promise.all(
+        // Use async/await correctly for assignment
+        const enrichedDepartments = await Promise.all(
             data['shop_by_department'].map(async (shop_by_department) => {
-                shop_by_department.sub_categories = await BusinessType.getSubCategories(shop_by_department); // Static call
+                try {
+                    const subCategories = await BusinessType.getSubCategories(shop_by_department);
+                    // Return the updated object with subcategories
+                    return {
+                        ...shop_by_department.toJSON(), // Convert to plain object
+                        sub_categories: subCategories
+                    };
+                } catch (error) {
+                    console.error('Error fetching subcategories for:', shop_by_department.slug, error);
+                    // Handle errors and return the object with an empty array
+                    return {
+                        ...shop_by_department.toJSON(), // Convert to plain object
+                        sub_categories: []
+                    };
+                }
             })
         );
 
+        data['shop_by_department'] = enrichedDepartments;
+
+        //now add vendors to data array
+        data['vendors'] = await Vendor.findAll({
+            where : {
+                status: 'Y',
+                vendor_type: 1,
+                activated_account: 'Y',
+                blocked_account: 'N',
+            },
+            attributes : ['id', 'name', 'slug'],
+            limit : 15
+        });
+
+        //now add service providers to data array
+        data['serviceProviders'] = await Vendor.findAll({
+            where : {
+                status: 'Y',
+                vendor_type: 2,
+                activated_account: 'Y',
+                blocked_account: 'N',
+            },
+            attributes : ['id', 'name', 'slug'],
+            limit : 15
+        });
         res.status(200).json(data);
     } catch (error) {
+        console.error('Error in mainSideBar function:', error);
         res.status(500).json({ error: error.message });
     }
 };

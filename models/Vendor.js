@@ -398,4 +398,4 @@ const Vendor = db.define('Vendor', {
     timestamps: false,
 });
 
-export default Vendor;
+module.exports = Vendor;
