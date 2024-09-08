@@ -3,6 +3,7 @@ const { DataTypes } = require('sequelize');
 const db = require('../config/database');
 const Speaker = require('./Speaker');
 const SpeakerWebinars = require('./SpeakerWebinars');
+const sequelize = require('../config/database'); // Your Sequelize instance
 
 const Webinar = db.define('Webinar', {
     id: {
@@ -220,18 +221,21 @@ const Webinar = db.define('Webinar', {
         collate: 'utf8mb4_general_ci',
     },
 }, {
+    sequelize,
+    modelName: 'Webinar',
     tableName: 'webinars',
-    timestamps: false,
+    timestamps: true
 });
 
-
+// Define association in Webinar model
 Webinar.associate = (models) => {
-    Webinar.belongsToMany(models.Speakers, { 
-        through: 'SpeakerWebinars', 
-        foreignKey: 'webinar_id', 
-        otherKey: 'speaker_id', 
-        as: 'speakers' 
+    Webinar.belongsToMany(models.Speaker, {
+        through: 'speaker_webinar',
+        as: 'speakers', // Alias for accessing speakers related to a webinar
+        foreignKey: 'webinar_id', // The key in the join table that relates to webinars
+        otherKey: 'speaker_id' // The key in the join table that relates to speakers
     });
 };
-  
+
+
 module.exports = Webinar;

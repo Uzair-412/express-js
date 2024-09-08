@@ -14,7 +14,7 @@ router.get('/users', userController.getUsers);
 //routes for dvm central
 router.get('/countries', homeController.getCountries);
 router.get('/states/:id', homeController.getStates);
-
+router.get('/mainSideBar', homeController.mainSideBar);
 
 //speaker routes for vetandtech
 router.get('/speakers', speakersController.getSpeakers);

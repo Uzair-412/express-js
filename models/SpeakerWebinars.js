@@ -31,9 +31,9 @@ const SpeakerWebinars = db.define('SpeakerWebinars', {
     timestamps: false,
 });
 
-// Define associations
 SpeakerWebinars.associate = (models) => {
     SpeakerWebinars.belongsTo(models.Webinar, { foreignKey: 'webinar_id' });
     SpeakerWebinars.belongsTo(models.Speaker, { foreignKey: 'speaker_id' });
 };
+  
 module.exports = SpeakerWebinars;

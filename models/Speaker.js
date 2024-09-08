@@ -4,6 +4,7 @@ const db = require('../config/database');
 const Webinar = require('./Webinar');
 const SpeakerWebinar = require('./SpeakerWebinars');
 const moment = require('moment-timezone'); 
+const sequelize = require('../config/database'); // Your Sequelize instance
 
 const Speaker = db.define('Speakers', {
     id: {
@@ -219,8 +220,10 @@ const Speaker = db.define('Speakers', {
         defaultValue: DataTypes.NOW
     }
 }, {
+    sequelize,
+    modelName: 'Speaker',
     tableName: 'speakers',
-    timestamps: false,
+    timestamps: true
 });
 
 // Define the many-to-many relationship with Webinar using the `SpeakerWebinar` intermediate table
@@ -241,37 +244,14 @@ Speaker.belongsToMany(Webinar, {
     as: 'speaker_past_webinars' 
 });
 
-// Speakers.prototype.getWebinarSpeakers = function() {
-//     const currentDate = moment().tz('UTC').toDate();  // Adjust timezone if needed
-//     console.log(currentDate);  // This should log the current date and stop execution
-//     process.exit();
-//     return this.getWebinar_speakers({
-//         where: {
-//             show_in_app: 1,
-//             webinar_type: 'website',
-//             status: 'Y',
-//             start_date: {
-//                 [Op.gte]: currentDate,
-//             },
-//         },
-//         order: [['start_date', 'ASC']],
-//     });
-// };
-
-// // Custom method to get past webinars
-// Speakers.prototype.getSpeakerPastWebinars = function() {
-//     return this.getSpeaker_past_webinars({
-//         where: {
-//             show_in_app: 1,
-//             webinar_type: 'website',
-//             status: 'Y',
-//             start_date: {
-//                 [Op.lt]: new Date()
-//             }
-//         },
-//         order: [['start_date', 'ASC']],
-//     });
-// };
-
+// Define association in Speaker model
+Speaker.associate = (models) => {
+    Speaker.belongsToMany(models.Webinar, {
+        through: 'speaker_webinar',
+        as: 'webinars', // Alias for accessing webinars related to a speaker
+        foreignKey: 'speaker_id', // The key in the join table that relates to speakers
+        otherKey: 'webinar_id' // The key in the join table that relates to webinars
+    });
+};
 
 module.exports = Speaker;

@@ -1,5 +1,7 @@
-import { DataTypes } from 'sequelize';
-import db from "@lib/db";
+const { DataTypes,Op } = require('sequelize');
+const db = require('../config/database');
+const Category = require('./Category');
+
 
 const BusinessType = db.define('BusinessTypes', {
     id: {
@@ -86,4 +88,21 @@ const BusinessType = db.define('BusinessTypes', {
     updatedAt: 'updated_at'
 });
 
-export default BusinessType;
+// Adding static method to find subcategories
+BusinessType.getSubCategories = async function(business_type) {
+    return await Category.findAll({
+        where: {
+            slug: {
+                [Op.like]: `%${business_type.slug}%`  // Perform 'LIKE' query on slug
+            },
+            status: 'Y'
+        },
+        attributes: [
+            'id', 'business_type', 'parent_id', 'name', 'slug',
+            'meta_title', 'meta_description', 'meta_keywords',
+            'image', 'status', 'display_mode', 'position'
+        ]
+    });
+};
+
+module.exports = BusinessType;

@@ -1,5 +1,5 @@
-import { DataTypes } from 'sequelize';
-import db from "@lib/db";
+const { DataTypes } = require('sequelize');
+const db = require('../config/database');
 
 const Category = db.define('Category', {
     id: {
@@ -130,4 +130,4 @@ const Category = db.define('Category', {
     updatedAt: 'updated_at'
 });
 
-export default Category;
+module.exports = Category;

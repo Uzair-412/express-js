@@ -5,6 +5,7 @@ const Webinar = require('../models/Webinar');
 const moment = require('moment-timezone');  // Use moment for date handling
 
 const { Op } = require('sequelize');
+const Speaker = require('../models/Speaker');
 
 
 exports.getSpeakers = async (req, res) => {
@@ -98,12 +99,18 @@ exports.getSpeakers = async (req, res) => {
                 status: 'Y'
             },
             include: [{
-                model: Speakers, 
-                as: 'speakers', 
+                model: Speaker, 
+                as: 'speakers', // Make sure this matches the alias in the association
                 attributes: ['id', 'slug', 'first_name', 'last_name', 'credentials', 'institute', 'job_title', 'profile']
             }],
             order: [['start_date', 'ASC']]
         });
+        
+        // Deleting course_about if necessary
+        speakersWithWebinars.forEach(webinar => {
+            delete webinar.course_about;
+        });
+        
           
         speakersWithWebinars.forEach(webinar => {
             delete webinar.course_about;
