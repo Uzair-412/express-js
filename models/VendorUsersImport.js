@@ -60,4 +60,4 @@ const VendorUsersImport = db.define('VendorUsersImport', {
     timestamps: false,
 });
 
-export default VendorUsersImport;
+module.exports = VendorUsersImport

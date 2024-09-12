@@ -86,4 +86,4 @@ const Reviews = db.define('Reviews', {
     timestamps: false
 });
 
-export default Reviews;
+module.exports = Reviews;
