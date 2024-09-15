@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const db = require('../config/database');
+const Products = require('./Products');
+const CategoryProduct = require('./CategoryProduct');
 
 const Category = db.define('Category', {
     id: {
@@ -129,5 +131,15 @@ const Category = db.define('Category', {
     createdAt: 'created_at',
     updatedAt: 'updated_at'
 });
+
+
+
+Category.belongsToMany(Products, { 
+    as: 'products',            // Alias for the relationship
+    through: CategoryProduct,   // Join table model
+    foreignKey: 'category_id',  // Foreign key for Category in the join table
+    otherKey: 'product_id'      // Foreign key for Product in the join table
+});
+
 
 module.exports = Category;

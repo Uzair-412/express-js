@@ -5,6 +5,7 @@ const Vendor = require('./Vendor');
 const VendorUsersImport = require('./VendorUsersImport');
 const User = require('./User');
 const Reviews = require('./Reviews');
+const Category = require('./Category');
 
 // Define the Products model
 const Products = db.define('Products', {
@@ -449,6 +450,7 @@ Products.getNewProducts = async function(limit = null) {
         new: 'Y',
         order_by: 'rand',
         limit: limit,
+        hot : 'Y',
         home_page_data : true
     };
     return this.getProducts(filter);
@@ -517,25 +519,12 @@ Products.getProducts = async function(filter = {}) {
     }
     if (filter.hot) {
         query.where.hot = filter.hot;
-        query.include = [{ model: Category }];
+        if (!query.include) {
+          query.include = []; // Initialize query.include as an array
+        }
+        query.include.push({ model: Category, as: 'category' });
     }
-    if (filter.coupons) {
-        query.include = query.include || [];
-        query.include.push({
-            model: Vendor,
-            include: [{
-                model: Coupon,
-                where: {
-                    status: 'Y',
-                    showcase: 'Y',
-                    coupon_type: { [Op.ne]: 3 },
-                    date_to: { [Op.gte]: new Date() },
-                    date_from: { [Op.lte]: new Date() },
-                },
-                attributes: ['id', 'name', 'vendor_id', 'coupon', 'free_shipping', 'type', 'discount', 'status']
-            }]
-        });
-    }
+
     if (filter.latest) {
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - 3);
@@ -544,16 +533,7 @@ Products.getProducts = async function(filter = {}) {
         };
         query.order = [['created_at', 'DESC']];
     }
-    if (filter.related_products) {
-        query.include = query.include || [];
-        query.include.push({ model: Review });
-        query.where.related_products = filter.related_products;
-    }
-    if (filter.status) {
-        query.include = query.include || [];
-        query.include.push({ model: Review });
-        query.where.status = filter.status;
-    }
+
     if (filter.name) {
         query.where.name = { [Op.iLike]: `%${filter.name}%` };
     }

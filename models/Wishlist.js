@@ -39,4 +39,16 @@ const Wishlist = db.define('Wishlist', {
     timestamps: false,
 });
 
-export default Wishlist;
+// Fetch the wishlist status
+Wishlist.getProductWishlistStatus = async function (productID, customerID) {
+    const wishlistExists = await Wishlist.findOne({
+      where: {
+        customer_id: customerID,
+        product_id: productID
+      }
+    });
+  
+    return !!wishlistExists;;
+}
+
+module.exports = Wishlist;

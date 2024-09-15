@@ -1,5 +1,5 @@
-import { DataTypes } from 'sequelize';
-import db from "@lib/db";
+const { DataTypes } = require('sequelize');
+const db = require('../config/database');
 
 // Define the CategoryProduct model
 const CategoryProduct = db.define('CategoryProduct', {
@@ -20,4 +20,4 @@ const CategoryProduct = db.define('CategoryProduct', {
 // CategoryProduct.belongsTo(Category, { foreignKey: 'category_id' });
 // CategoryProduct.belongsTo(Product, { foreignKey: 'product_id' });
 
-export default CategoryProduct;
+module.exports = CategoryProduct;

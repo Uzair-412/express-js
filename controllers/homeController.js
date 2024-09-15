@@ -4,6 +4,7 @@ const States = require('../models/States');
 const BusinessType = require('../models/BusinessType');
 const Vendor = require('../models/Vendor');
 const Products = require('../models/Products');
+const Wishlist = require('../models/Wishlist');
 
 exports.getCountries = async (req, res) => {
     try {
@@ -108,19 +109,19 @@ exports.homePageDataV2 =  async (req , res) => {
                 const seePrice = await Products.showPrice(hot_product.id, data['customer_id']);
                 const reviews = await Products.getReviews(hot_product.id);
                 const reviewsCount = await Products.reviewCounts(hot_product.id);
+                if(data['customer_id']){
+                    var wishlistData = await Wishlist.getProductWishlistStatus(hot_product.id, data['customer_id']);
+                }
                 return {
                     ...hot_product.toJSON(), // Convert to plain object
                     price_show_to_logged_in_user_only: showPriceOld,
                     see_price: seePrice,
                     rating : reviews,
-                    reviews_count : reviewsCount
+                    reviews_count : reviewsCount,
+                    wishlist : wishlistData
                 };
             } catch (error) {
                 console.error('Error fetching subcategories for:', hot_product.slug, error);
-                return {
-                    ...hot_product.toJSON(), // Convert to plain object
-                    price_show_to_logged_in_user_only: null
-                };
             }
         })
     );
