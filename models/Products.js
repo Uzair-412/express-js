@@ -6,6 +6,8 @@ const VendorUsersImport = require('./VendorUsersImport');
 const User = require('./User');
 const Reviews = require('./Reviews');
 const Category = require('./Category');
+const CategoryProduct = require('./CategoryProduct');
+const paginate = require('sequelize-paginate');
 
 // Define the Products model
 const Products = db.define('Products', {
@@ -445,7 +447,7 @@ Products.belongsTo(Vendor, {
     as: 'vendor'
 });
 
-Products.getNewProducts = async function(limit = null) {
+Products.getHotProducts = async function(limit = null) {
     const filter = {
         new: 'Y',
         order_by: 'rand',
@@ -455,14 +457,52 @@ Products.getNewProducts = async function(limit = null) {
     };
     return this.getProducts(filter);
 }
+Products.getFeaturedProducts = async function(limit = null , paginate = null) {
+    const filter = {
+        order_by: 'rand',
+        limit: limit,
+        featured : 'Y',
+        home_page_data : true
+    };
+    return this.getProducts(filter);
+}
+Products.getLatestProducts = async function(limit = null) {
+    const filter = {
+        order_by: 'rand',
+        limit: limit,
+        latest : 'Y',
+        home_page_data : true
+    };
+    return this.getProducts(filter);
+}
+Products.getDealsOfTheDayProducts = async function(limit = null, coupon = null) {
+    const filter = {
+        order_by: 'rand',
+        limit: limit,
+        deals_of_the_day : 'Y',
+        home_page_data : true
+    };
+    if(coupon)
+        filter['coupons'] = true;
+    return this.getProducts(filter);
+}
+
+
 
 Products.getProducts = async function(filter = {}) {
     const query = {
         where: {
             status: 'Y',
             parent_id: 0
-        }
+        },
+
     };
+    
+
+    // const categories = await Category.findAll();
+    // console.log(categories, 'categories');
+
+    // process.exit();
 
     if (filter.parent_id) {
         query.where.parent_id = filter.parent_id;
@@ -517,13 +557,13 @@ Products.getProducts = async function(filter = {}) {
     if (filter.type) {
         query.where.type = filter.type;
     }
+    if (filter.deals_of_the_day) {
+        query.where.deals_of_the_day = filter.deals_of_the_day;
+    }
     if (filter.hot) {
         query.where.hot = filter.hot;
-        if (!query.include) {
-          query.include = []; // Initialize query.include as an array
-        }
-        query.include.push({ model: Category, as: 'category' });
     }
+      
 
     if (filter.latest) {
         const startDate = new Date();
@@ -588,23 +628,33 @@ Products.getProducts = async function(filter = {}) {
     }
     if (filter.keywords) {
         query.attributes = [
-            'id', 'type', 'name', 'slug', 'sku', 'sku_stripped', 'sku_variations', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'max_quantity_threshold', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'hot', 'created_at', 'quantity'
+            'id', 'type', 'name', 'slug', 'sku', 'sku_stripped', 'sku_variations', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'max_quantity_threshold', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'hot', 'created_at', 'quantity','level'
         ];
     } else if (filter.all) {
         query.attributes = [
-            'id', 'type', 'name', 'slug', 'sku', 'meta_keywords', 'meta_description', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'price_range_max', 'price_range_min', 'in_stock', 'hot', 'created_at', 'quantity'
+            'id', 'type', 'name', 'slug', 'sku', 'meta_keywords', 'meta_description', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'price_range_max', 'price_range_min', 'in_stock', 'hot', 'created_at', 'quantity','level'
         ];
     } else {
         query.attributes = [
-            'id', 'type', 'name', 'slug', 'sku', 'meta_keywords', 'meta_description', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'price_range_max', 'price_range_min', 'in_stock', 'hot', 'created_at', 'quantity'
+            'id', 'type', 'name', 'slug', 'sku', 'meta_keywords', 'meta_description', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'price_range_max', 'price_range_min', 'in_stock', 'hot', 'created_at', 'quantity','level'
         ];
     }
+    const limit = filter.limit;
+    // If fetching data for the home page with a specific limit
     if (filter.home_page_data) {
-        return this.findAll({ ...query, limit: filter.limit });
+        return this.findAll({ ...query, limit });
+    
+    // If fetching all data without pagination
     } else if (filter.all) {
         return this.findAll(query);
+    
+    // Otherwise, fetch paginated data (findAndCountAll returns both count and rows)
     } else {
-        return this.findAndCountAll(query);
+        return this.findAndCountAll({
+            ...query,
+            limit,
+            offset
+        });
     }
 };
 
@@ -706,6 +756,15 @@ Products.reviewCounts = async function (productID){
     });
     
     return reviewCount;
+}
+
+Products.associate = () => {
+    Products.belongsToMany(Categories, {
+        as: 'categories',
+        through: CategoryProduct,
+        foreignKey: 'product_id',
+        otherKey: 'category_id'
+      });
 }
 
 module.exports = Products;
