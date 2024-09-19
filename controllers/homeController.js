@@ -3,10 +3,12 @@ const Country = require('../models/Country');
 const States = require('../models/States');
 const BusinessType = require('../models/BusinessType');
 const Vendor = require('../models/Vendor');
-const Webinar = require('../models/Webinar');
 const Products = require('../models/Products');
 const Wishlist = require('../models/Wishlist');
+const Webinar = require('../models/Webinar');
+
 const { Op } = require('sequelize');
+
 
 exports.getCountries = async (req, res) => {
     try {
@@ -162,31 +164,61 @@ exports.homePageDataV2 =  async (req , res) => {
 
     //upcoming expo data
     let display_on = ['2', '3']; // form dvm 2 and 3 display
-    const currentDate = moment().tz('UTC').format('YYYY-MM-DD HH:mm:ss');  // Format to match database
+    const currentDate = new Date(); // Get the current date in JavaScript
 
-    data['upcoming_expo'] = await Webinar.findAll({
-        where : {
+    data['upcoming_expo'] = await Webinar.findOne({
+        where: {
             display_on: {
                 [Op.in]: display_on // Array of display numbers
             },
-            show_in_app : 1,
-            webinar_type : 'website',
-            status : 'Y',
-            start_date : {
-                [Op.gte] : currentDate
+            show_in_app: 1,
+            webinar_type: 'website',
+            status: 'Y',
+            start_date: {
+                [Op.gt]: currentDate // Matches '>' condition in Laravel
             }
         },
-        attributes : {exclude : ['course_about', 'learning_objectives']}
+        attributes: {
+            exclude: ['course_about', 'learning_objectives', 'speaker'] // Exclude fields
+        }
     });
+
+    //sponsored vendors section 
+    data['sponsored_vendors'] = await Vendor.findAll({
+        where :{
+            activated_account : 'Y',
+            status : 'Y',
+            blocked_account : 'N',
+            vendor_type : 1,
+        },
+        attributes : ['id', 'name', 'logo','slug'],
+        limit : 4
+    });
+    enrichVendorData = await Promise.all(
+        data['sponsored_vendors'].map(async (sponsored_vendors) => {
+            try {
+                const rating = await Vendor.vendor_rating(sponsored_vendors);
+                // Return the updated object with subcategories
+                return {
+                    ...sponsored_vendors.toJSON(), // Convert to plain object
+                    rating: rating
+                };
+            } catch (error) {
+                console.error('Error fetching sponsored_vendors for:', sponsored_vendors, error);
+                // Handle errors and return the object with an empty array
+                return {
+                    ...sponsored_vendors.toJSON(), // Convert to plain object
+                    rating: 0
+                };
+            }
+        })
+    );
+
+    data['sponsored_vendors'] = enrichVendorData;
 
     res.status(200).json(data);
 
 };
-
-//     //upcoming expo
-//     $displayOn =  ['2', '3'];  //for dvm
-//     $data['upcoming_expo'] = Webinar::with('speaker:id,first_name,last_name,profile,slug,job_title,institute')->whereIn('display_on',$displayOn)->where([['show_in_app', 1], ['webinar_type', 'website'], ['status', 'Y']])->where('start_date',  '>', date('y-m-d h:i:s'))->first();
-//     unset($data['upcoming_expo']->course_about,$data['upcoming_expo']->learning_objectives,$data['upcoming_expo']->speaker);
 
 //     //Dvm sponsored vendors
 //     $data['sponsored_vendors'] = Vendor::whereHas('products')->where(['status' => 'Y' , 'vendor_type' => 1,'activated_account'=>'Y','blocked_account'=>'N' ])->select('id', 'name', 'logo', 'slug')->take(4)->get();

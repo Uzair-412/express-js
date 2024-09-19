@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const db = require('../config/database');
+const Products = require('./Products');
 
 // Define the Reviews model
 const Reviews = db.define('Reviews', {
@@ -86,4 +87,10 @@ const Reviews = db.define('Reviews', {
     timestamps: false
 });
 
+Reviews.associate = (models) => {
+    Reviews.belongsTo(Products, {
+        foreignKey: 'product_id', // foreign key
+        as: 'products' // Alias for accessing associated Product
+    });
+}
 module.exports = Reviews;

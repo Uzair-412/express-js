@@ -1,6 +1,8 @@
 // Filename: Vendor.js
-const { DataTypes } = require('sequelize');
+const { DataTypes , literal, Op} = require('sequelize');
 const db = require('../config/database');
+const Reviews = require('./Reviews');
+const Products = require('./Products');
 
 const Vendor = db.define('Vendor', {
     id: {
@@ -398,4 +400,28 @@ const Vendor = db.define('Vendor', {
     timestamps: false,
 });
 
+
+Vendor.vendor_rating = async function(vendor) {
+    const rating = await Reviews.findOne({
+        attributes: [
+            [literal('SUM(rating)/COUNT(*) as Rating')] // Average rating calculation
+        ],
+        include: [{
+            model: Products,
+            where: {
+                vendor_id: vendor.id // Filter products by vendor_id
+            }
+        }],
+        where: {
+            rating: {
+                [Op.ne]: 0 // Rating not equal to 0
+            },
+            status: 'Y' // Status equals 'Y'
+        }
+    });
+    
+    return rating ? rating.Rating : null;
+}
+
 module.exports = Vendor;
+

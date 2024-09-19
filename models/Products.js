@@ -447,6 +447,12 @@ Products.belongsTo(Vendor, {
     as: 'vendor'
 });
 
+// Define associations
+Products.hasMany(Reviews, {
+    foreignKey: 'product_id', // Foreign key in Review model
+    as: 'reviews' // Alias for accessing associated Reviews
+});
+
 Products.getHotProducts = async function(limit = null) {
     const filter = {
         new: 'Y',

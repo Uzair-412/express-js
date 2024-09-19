@@ -224,7 +224,10 @@ const Webinar = db.define('Webinar', {
     sequelize,
     modelName: 'Webinar',
     tableName: 'webinars',
-    timestamps: true
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+
 });
 
 // Define association in Webinar model

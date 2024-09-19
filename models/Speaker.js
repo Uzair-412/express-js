@@ -229,22 +229,23 @@ const Speaker = db.define('Speakers', {
 // Define the many-to-many relationship with Webinar using the `SpeakerWebinar` intermediate table
 
 // Associations
-
-Speaker.belongsToMany(Webinar, { 
-    through: SpeakerWebinar, 
-    foreignKey: 'speaker_id', 
-    otherKey: 'webinar_id', 
-    as: 'webinar_speakers' 
-});
-
-Speaker.belongsToMany(Webinar, { 
-    through: SpeakerWebinar, 
-    foreignKey: 'speaker_id', 
-    otherKey: 'webinar_id',
-    as: 'speaker_past_webinars' 
-});
-
-// Define association in Speaker model
+Speaker.associate = (models) => {
+    Speaker.belongsToMany(Webinar, { 
+        through: SpeakerWebinar, 
+        foreignKey: 'speaker_id', 
+        otherKey: 'webinar_id', 
+        as: 'webinar_speakers' 
+    });
+}
+Speaker.associate = (models) => {
+    Speaker.belongsToMany(Webinar, { 
+        through: SpeakerWebinar, 
+        foreignKey: 'speaker_id', 
+        otherKey: 'webinar_id',
+        as: 'speaker_past_webinars' 
+    });
+}
+// // Define association in Speaker model
 Speaker.associate = (models) => {
     Speaker.belongsToMany(models.Webinar, {
         through: 'speaker_webinar',
