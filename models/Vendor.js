@@ -400,16 +400,27 @@ const Vendor = db.define('Vendor', {
     timestamps: false,
 });
 
+// associations 
+Vendor.associate = () => {
+    Vendor.hasMany(Products, {
+        foreignKey: 'vendor_id',
+        as: 'products'
+    });
+}
 
-Vendor.vendor_rating = async function(vendor) {
+
+
+// functions
+Vendor.vendorRating = async function(vendor_id) {
     const rating = await Reviews.findOne({
         attributes: [
             [literal('SUM(rating)/COUNT(*) as Rating')] // Average rating calculation
         ],
         include: [{
             model: Products,
+            as : 'product',
             where: {
-                vendor_id: vendor.id // Filter products by vendor_id
+                vendor_id: vendor_id // Filter products by vendor_id
             }
         }],
         where: {
@@ -421,6 +432,25 @@ Vendor.vendor_rating = async function(vendor) {
     });
     
     return rating ? rating.Rating : null;
+}
+Vendor.vendorRatingCounts = async function(vendor_id) {
+    try {
+        const ratingCounts = await Reviews.count({
+            include: [{
+                model: Products,
+                where: { vendor_id: vendor_id }
+            }],
+            where: {
+                rating: { [Op.ne]: 0 }, // rating != 0
+                status: 'Y'
+            }
+        });
+
+        return ratingCounts;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
 }
 
 module.exports = Vendor;

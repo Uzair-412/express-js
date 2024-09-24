@@ -441,18 +441,21 @@ const Products = db.define('Products', {
     timestamps: false
 });
 
+Products.associate = () => {
+    Products.belongsToMany(Category, { through: 'category_product', foreignKey: 'product_id', otherKey: 'category_id' });
+}
+
 //associations
+Products.associate = () => {
+    Products.hasMany(Reviews, {
+        foreignKey: 'product_id', // Foreign key in Review model
+        as: 'reviews' // Alias for accessing associated Reviews
+    });
+}
 Products.belongsTo(Vendor, {
     foreignKey: 'vendor_id',
     as: 'vendor'
 });
-
-// Define associations
-Products.hasMany(Reviews, {
-    foreignKey: 'product_id', // Foreign key in Review model
-    as: 'reviews' // Alias for accessing associated Reviews
-});
-
 Products.getHotProducts = async function(limit = null) {
     const filter = {
         new: 'Y',
@@ -762,15 +765,6 @@ Products.reviewCounts = async function (productID){
     });
     
     return reviewCount;
-}
-
-Products.associate = () => {
-    Products.belongsToMany(Categories, {
-        as: 'categories',
-        through: CategoryProduct,
-        foreignKey: 'product_id',
-        otherKey: 'category_id'
-      });
 }
 
 module.exports = Products;

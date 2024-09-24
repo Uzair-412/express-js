@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const db = require('../config/database');
-const Products = require('./Products');
+const Products = require('./Products'); // Ensure the Products model is correctly imported
 
 // Define the Reviews model
 const Reviews = db.define('Reviews', {
@@ -87,10 +87,11 @@ const Reviews = db.define('Reviews', {
     timestamps: false
 });
 
-Reviews.associate = (models) => {
-    Reviews.belongsTo(Products, {
-        foreignKey: 'product_id', // foreign key
-        as: 'products' // Alias for accessing associated Product
+// Define the association with Products
+Reviews.associate = () => {
+        Reviews.belongsTo(Products, {
+        foreignKey: 'product_id', // Foreign key in Review model
+        as: 'product' // Alias for the associated Product
     });
 }
 module.exports = Reviews;

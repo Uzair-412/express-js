@@ -6,7 +6,10 @@ const Vendor = require('../models/Vendor');
 const Products = require('../models/Products');
 const Wishlist = require('../models/Wishlist');
 const Webinar = require('../models/Webinar');
+const Category = require('../models/Category');
+const Reviews = require('../models/Reviews');
 
+const paginate = require('../helper/pagination');
 const { Op } = require('sequelize');
 
 
@@ -183,54 +186,140 @@ exports.homePageDataV2 =  async (req , res) => {
         }
     });
 
-    //sponsored vendors section 
+   // Fetch sponsored vendors section
     data['sponsored_vendors'] = await Vendor.findAll({
-        where :{
-            activated_account : 'Y',
-            status : 'Y',
-            blocked_account : 'N',
-            vendor_type : 1,
+        where: {
+            activated_account: 'Y',
+            status: 'Y',
+            blocked_account: 'N',
+            vendor_type: 1,
         },
-        attributes : ['id', 'name', 'logo','slug'],
-        limit : 4
+        attributes: ['id', 'name', 'logo', 'slug'],
+        limit: 4
     });
+
     enrichVendorData = await Promise.all(
-        data['sponsored_vendors'].map(async (sponsored_vendors) => {
+        data['sponsored_vendors'].map(async (sponsored_vendor) => {
             try {
-                const rating = await Vendor.vendor_rating(sponsored_vendors);
-                // Return the updated object with subcategories
+                // Fetch rating and rating counts by passing the vendor's ID
+                const rating = await Vendor.vendorRating(sponsored_vendor.id);
+                const rating_counts = await Vendor.vendorRatingCounts(sponsored_vendor.id);
+
+                // Return the updated object with rating and rating counts
                 return {
-                    ...sponsored_vendors.toJSON(), // Convert to plain object
-                    rating: rating
+                    ...sponsored_vendor.toJSON(), // Convert to plain object
+                    rating: rating,
+                    rating_counts: rating_counts
                 };
             } catch (error) {
-                console.error('Error fetching sponsored_vendors for:', sponsored_vendors, error);
-                // Handle errors and return the object with an empty array
+                console.error('Error fetching sponsored_vendors for:', sponsored_vendor, error);
+
+                // Handle errors and return the object with default rating and counts
                 return {
-                    ...sponsored_vendors.toJSON(), // Convert to plain object
-                    rating: 0
+                    ...sponsored_vendor.toJSON(), // Convert to plain object
+                    rating: 0,
+                    rating_counts: 0
                 };
             }
         })
     );
 
     data['sponsored_vendors'] = enrichVendorData;
-
+    
     res.status(200).json(data);
 
 };
+
+
+exports.VetPracticeProducts = async (req, res) => {
+    try {
+        const data = {};
+        data['page_type'] = 'homepage';
+        data['customer_id'] = req.header('type') ?? null;
+
+        const business_type_id = req.query.category_id;
+        const business_type = await BusinessType.findByPk(business_type_id);
+
+        // Await the category query to get the results
+        const categories = await Category.findAll({
+            where: { business_type: business_type_id },
+            attributes: ['id']
+        });
+
+        // Extract category IDs from the returned categories
+        const categoryIds = categories.map(category => category.id);
+
+        // const vet_practice_product_ids = await Products.findAll({
+
+        //     attributes: ['product_id'],
+        //     where: {
+        //         category_id: {
+        //             [Op.in]: categoryIds // Use the extracted category IDs
+        //         }
+        //     },
+        //     raw: true // return plain object instead of Sequelize model instances
+        // }).then(products => products.map(product => product.product_id)); // Use .then() to map the results
+
+        data['vet_practice_products'] = await Products.findAll({
+            where: {
+              id: {
+                [Op.in]: [1, 2, 3]
+              }
+            },
+            include: [
+              {
+                model: Category,
+                as: 'categories',
+                through: { attributes: [] }, // Hide intermediate table data
+                attributes: ['id', 'name'],  // Specify category attributes you want to retrieve
+              },
+              {
+                association: 'vendor', // Make sure 'vendor' is associated properly in the Product model
+                required: true,
+                attributes: ['id', 'name', 'slug', 'logo', 'email']
+              }
+            ],
+            attributes: ['id', 'type', 'name', 'slug', 'sku', 'meta_keywords', 'meta_description', 'price', 'price_catalog', 'image', 'vendor_id', 'vendor_product_url', 'price_discounted', 'price_discounted_start', 'price_discounted_end', 'price_range_max', 'price_range_min', 'in_stock', 'hot', 'created_at', 'quantity']
+        });
+          
+
+        res.status(200).json(data);
+    } catch (error) {
+        res.status(201).json({ error: error.message });
+    }
+};
+
+//     $vet_practice_product_ids = Product::select('product_id')->from('category_product')->whereIn('category_id', $category)->pluck('product_id');
+//     $data['vet_practice_products'] = Product::with('categories')->whereHas('vendor')->whereIn('id', $vet_practice_product_ids)->select('id','type','name','slug','sku','meta_keywords','meta_description','price','price_catalog','image', 'vendor_id', 'vendor_product_url','price_discounted','price_discounted_start','price_discounted_end', 'price_range_max','price_range_min','in_stock','hot' ,'created_at' ,'quantity')->paginate(12);
+//     foreach ($data['vet_practice_products'] as $vet_practice_product) {
+//         //show price check
+//         $vet_practice_product->price_show_to_logged_in_user_only = Product::showPriceOld($vet_practice_product);
+//         $vet_practice_product->see_price = Product::showPrice($vet_practice_product, $data['customer_id']);            
+//         if($vet_practice_product->type == 'variation'){
+//             $vet_practice_product->range = \App\Models\Product::getSubItemsPriceRange($vet_practice_product->id);
+//         }
+//         $vet_practice_product->rating= $vet_practice_product->getReviews($vet_practice_product->id);
+//         $vet_practice_product->reviews_count = Review::where(['product_id' => $vet_practice_product->id, 'status' => 'Y'])->count();
+//         if (isset($data['customer_id'])) {
+//             $vet_practice_product->wishlist = Product::isWishlistProduct($vet_practice_product->id,  $data['customer_id']);
+//         }
+//         $vet_practice_product->parent_category = array_map(function($businessType) {
+//             return [
+//                 'id' => $businessType['id'],
+//                 'name' => $businessType['name']
+//             ];
+//         }, $businessType);
+//         // Product::createIpression($different_categories_product);
+//     }
+//     return response()->json($data, 200);
+// }
 
 //     //Dvm sponsored vendors
 //     $data['sponsored_vendors'] = Vendor::whereHas('products')->where(['status' => 'Y' , 'vendor_type' => 1,'activated_account'=>'Y','blocked_account'=>'N' ])->select('id', 'name', 'logo', 'slug')->take(4)->get();
 //     foreach($data['sponsored_vendors'] as $vendor){
 //         $vendor->rating = round($vendor->vendor_rating($vendor->id), 0);
 //         $vendor_id = $vendor->id;
-//         $vendor['rating_counts'] = Review::whereHas('product', function ($query) use ($vendor_id) {
-//             $query->where('vendor_id', '=', $vendor_id);
-//         })->where([
-//             ['rating', '!=', 0],
-//             ['status', '=', 'Y']
-//         ])->count();
+        
 //     }
     
 //     return response()->json($data, 200);

@@ -16,6 +16,7 @@ router.get('/countries', homeController.getCountries);
 router.get('/states/:id', homeController.getStates);
 router.get('/mainSideBar', homeController.mainSideBar);
 router.get('/home-v2', homeController.homePageDataV2);
+router.get('/vet-practice-products', homeController.VetPracticeProducts);
 
 //speaker routes for vetandtech
 router.get('/speakers', speakersController.getSpeakers);
