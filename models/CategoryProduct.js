@@ -3,19 +3,15 @@ const db = require('../config/database');
 
 // Define the CategoryProduct model
 const CategoryProduct = db.define('CategoryProduct', {
-    category_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false
-    },
     product_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false
+      type: DataTypes.INTEGER,
+      
+    },
+    category_id: {
+      type: DataTypes.INTEGER,
+      
     }
-}, {
-    tableName: 'category_product',
-    timestamps: false // This table does not need timestamps
-});
-
+  });
 // Optionally, define associations if needed
 // CategoryProduct.belongsTo(Category, { foreignKey: 'category_id' });
 // CategoryProduct.belongsTo(Product, { foreignKey: 'product_id' });

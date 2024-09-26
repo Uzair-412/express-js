@@ -441,9 +441,10 @@ const Products = db.define('Products', {
     timestamps: false
 });
 
-Products.associate = () => {
-    Products.belongsToMany(Category, { through: 'category_product', foreignKey: 'product_id', otherKey: 'category_id' });
-}
+Products.associate = (models) => {
+    Products.belongsToMany(models.Category, { through: 'CategoryProduct' });
+};
+  
 
 //associations
 Products.associate = () => {

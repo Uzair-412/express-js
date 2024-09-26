@@ -121,7 +121,8 @@ const Category = db.define('Category', {
 // Self-referential relationship for parent-child categories
 Category.belongsTo(Category, { as: 'parent', foreignKey: 'parent_id' });
 
-// Many-to-Many relationship between Categories and Products
-Category.belongsToMany(Products, { through: 'category_product', foreignKey: 'category_id', otherKey: 'product_id', as: 'products' });
+Category.associate = (models) => {
+    Category.belongsToMany(models.Products, { through: 'CategoryProduct' });
+};
 
 module.exports = Category;
